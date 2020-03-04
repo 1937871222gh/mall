@@ -1,33 +1,20 @@
 <template>
     <div id="home">
         <nav-bar class="home-nav"><div slot="center">购物车</div></nav-bar>
+        <scroll
+                :probeType="3"
+                :pullUpLoad="true"
+                class="content"
+                ref="scroll"
+                @scroll="contentScroll"
+                @pullingUp="loadMore">
         <home-swiper :banners="banners"/>
         <recommend-view :recommends="recommends"/>
         <feature-view/>
         <tab-control :titles="['流行','新款','精选']" @tabClick="tabClick"/>
         <goods-list :goods="showGoods"/>
-        <ul>
-            <li>我擦</li>
-            <li>我擦</li>
-            <li>我擦</li>
-            <li>我擦</li>
-            <li>我擦</li>
-            <li>我擦</li>
-            <li>我擦</li>
-            <li>我擦</li>
-            <li>我擦</li>
-            <li>我擦</li>
-            <li>我擦</li>
-            <li>我擦</li>
-            <li>我擦</li>
-            <li>我擦</li>
-            <li>我擦</li>
-            <li>我擦</li>
-            <li>我擦</li>
-            <li>我擦</li>
-            <li>我擦</li>
-            <li>我擦</li>
-        </ul>
+        </scroll>
+        <back-top @click.native="backClick" v-show="isShowBackTop"/>
     </div>
 </template>
 
@@ -39,6 +26,9 @@
     import TabControl from "components/content/tabControl/TabControl";
     import GoodsList from "components/content/goods/GoodsList";
     import GoodsListItem from "components/content/goods/GoodsListItem";
+
+    import Scroll from "components/common/scroll/Scroll";
+    import BackTop from "components/content/backTop/BackTop";
 
     import {getHomeMultidata,getHomeGoods} from "network/home";
 
@@ -54,7 +44,8 @@
                     'new':{page: 0, list: []},
                     'sell':{page: 0, list: []}
                 },
-                currentType:'pop'
+                currentType:'pop',
+                isShowBackTop:'true',
             }
         },
         components: {
@@ -64,7 +55,10 @@
             FeatureView,
             TabControl,
             GoodsList,
-            GoodsListItem
+            GoodsListItem,
+
+            Scroll,
+            BackTop
         },
         created() {
             // 1.请求多个数据
@@ -98,6 +92,21 @@
                         this.currentType = 'sell'
                 }
             },
+            backClick(){
+                this.$refs.scroll.scrollTo(0,0,500)
+            },
+            contentScroll(position){
+                this.isShowBackTop = -(position.y)>1000
+                // 直接用表达式决定布尔值
+
+                // this.isTabFixed =  -(position.y)>this.tabOffsetTop
+                // // 决定是否吸顶
+            },
+            loadMore(){
+                // console.log('上拉加载更多');
+                // 加载记录的currentType
+                this.getHomeGoods(this.currentType)
+            },
             // 事件监听相关
 
             // 网络请求相关
@@ -117,7 +126,10 @@
                     //    ES6语法将请求数据list push到data的对应goods里面
                     this.goods[type].page += 1
                     // 上拉完成调用这个方法才能再次上拉
-                    // this.$refs.scroll.finishPullUp()
+                    this.$refs.scroll.finishPullUp()
+
+                    // 重新计算可滚动高度
+                    this.$refs.scroll.refresh()
                 })
             }
             // 网络请求相关
@@ -137,5 +149,13 @@
     top: 0;
     left: 0;
     right: 0;
+  }
+  .content{
+      position: absolute;
+      top: 44px;
+      bottom: 49px;
+      right: 0;
+      left: 0;
+      overflow: hidden;
   }
 </style>
