@@ -1,6 +1,8 @@
 <template>
     <div id="home">
         <nav-bar class="home-nav"><div slot="center">购物车</div></nav-bar>
+        <tab-control  :titles="['流行','新款','精选']"
+                      @tabClick="tabClick" ref="tabControl1" class="tab-control" v-show="isTabFixed"/>
         <scroll
                 :probeType="3"
                 :pullUpLoad="true"
@@ -8,10 +10,13 @@
                 ref="scroll"
                 @scroll="contentScroll"
                 @pullingUp="loadMore">
-        <home-swiper :banners="banners"/>
+        <home-swiper :banners="banners" @swiperImageLoad="swiperImageLoad"/>
         <recommend-view :recommends="recommends"/>
         <feature-view/>
-        <tab-control :titles="['流行','新款','精选']" @tabClick="tabClick"/>
+        <tab-control
+                :titles="['流行','新款','精选']"
+                @tabClick="tabClick"
+                ref="tabControl2"/>
         <goods-list :goods="showGoods"/>
         </scroll>
         <back-top @click.native="backClick" v-show="isShowBackTop"/>
@@ -31,6 +36,7 @@
     import BackTop from "components/content/backTop/BackTop";
 
     import {getHomeMultidata,getHomeGoods} from "network/home";
+    import {debounce} from "../../common/utils";
 
 
     export default {
@@ -46,6 +52,10 @@
                 },
                 currentType:'pop',
                 isShowBackTop:'true',
+                itemImgListener:null,
+                tabOffsetTop: 0,
+                isTabFixed: false,
+                saveY: 0
             }
         },
         components: {
@@ -72,6 +82,27 @@
             this.getHomeGoods('sell')
 
         },
+        mounted(){
+            const newrefresh = debounce( this.$refs.scroll.refresh,100)
+            //    监听GoodsListItem中的图片加载完成
+
+            this.itemImgListener = () =>{
+                newrefresh()
+            }
+            this.$bus.$on('itemimageLoad',this.itemImgListener)
+        },
+        activated(){
+            this.$refs.scroll.refresh()
+            // 去到上次活跃的saveY值那里
+            this.$refs.scroll.scrollTo(0,this.saveY,0)
+        },
+        deactivated(){
+            // 1.保存Y值
+            this.saveY =this.$refs.scroll.getScrollY()
+
+            // 2.取消全局事件的监听
+            // this.$bus.$off('itemImageLoad',this.itemImgListener)
+        },
         computed:{
             showGoods(){
                 return this.goods && this.goods[this.currentType].list
@@ -91,6 +122,9 @@
                     case 2:
                         this.currentType = 'sell'
                 }
+                this.$refs.tabControl1.currentIndex = index;
+                this.$refs.tabControl2.currentIndex = index;
+                //    统一两个tabControl点击的index
             },
             backClick(){
                 this.$refs.scroll.scrollTo(0,0,500)
@@ -99,13 +133,16 @@
                 this.isShowBackTop = -(position.y)>1000
                 // 直接用表达式决定布尔值
 
-                // this.isTabFixed =  -(position.y)>this.tabOffsetTop
-                // // 决定是否吸顶
+                this.isTabFixed =  -(position.y)>this.tabOffsetTop
+                // 决定是否吸顶
             },
             loadMore(){
                 // console.log('上拉加载更多');
                 // 加载记录的currentType
                 this.getHomeGoods(this.currentType)
+            },
+            swiperImageLoad(){
+                this.tabOffsetTop = this.$refs.tabControl2.$el.offsetTop
             },
             // 事件监听相关
 
@@ -157,5 +194,10 @@
       right: 0;
       left: 0;
       overflow: hidden;
+  }
+  .tab-control{
+      background-color: white;
+      position: relative;
+      z-index: 9;
   }
 </style>

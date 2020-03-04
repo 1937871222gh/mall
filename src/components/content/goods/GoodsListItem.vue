@@ -23,7 +23,7 @@
         },
         methods:{
             imageLoad(){
-                // this.$bus.$emit('itemimageLoad')
+                this.$bus.$emit('itemimageLoad')
             },
             itemClick(){
                 // this.$router.push('/detail/'+this.goodsItem.iid)
