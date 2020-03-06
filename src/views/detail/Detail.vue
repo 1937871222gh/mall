@@ -36,6 +36,7 @@
     import {getDetail,Goods,Shop,GoodsParam,getRecommend} from "network/detail";
     import {itemListenerMixin,backTopMixin} from "common/mixin";
     import {debounce} from "common/utils";
+    import {mapActions} from 'vuex'
 
     export default {
         name: "Detail",
@@ -117,6 +118,7 @@
             this.$bus.$off('itemImageLoad',this.itemImgListener)
         },
         methods: {
+            ...mapActions(['addCart']),
             titleClick(index){
                 this.$refs.scroll.scrollTo(0,-this.themeTopY[index],100)
             },
@@ -153,7 +155,7 @@
                 //     console.log(res)
                 // })
                 this.addCart(product).then(res => {
-                    console.log(res)
+                    // console.log(res)
                 })
             }
         }
