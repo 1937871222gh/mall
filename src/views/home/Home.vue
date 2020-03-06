@@ -101,7 +101,7 @@
             this.saveY =this.$refs.scroll.getScrollY()
 
             // 2.取消全局事件的监听
-            // this.$bus.$off('itemImageLoad',this.itemImgListener)
+            this.$bus.$off('itemImageLoad',this.itemImgListener)
         },
         computed:{
             showGoods(){

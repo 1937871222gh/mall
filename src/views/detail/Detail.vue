@@ -1,14 +1,19 @@
 <template>
     <div id="detail">
-        <detail-nav-bar class="nav-bar"/>
-        <scroll :pullUpLoad="false" class="content">
+        <detail-nav-bar class="nav-bar" @itemClick="titleClick" ref="nav"/>
+        <scroll
+                :pullUpLoad="false"
+                class="content"
+                ref="scroll"
+                :probe-type="3"
+                @scroll="contentScroll">
         <detail-swiper :top-images="topImages"/>
         <detail-base-info :goods="goods"/>
         <detail-shop-info :shop="shop"/>
-        <detail-goods-info :detail-info="detailInfo"/>
-        <detail-param-info :param-info="paramInfo"/>
-        <detail-comment-info :comment-info="commentInfo"/>
-        <goods-list :goods="recommends"/>
+        <detail-goods-info :detail-info="detailInfo" @imageLoad="imageLoad"/>
+        <detail-param-info :param-info="paramInfo" ref="param"/>
+        <detail-comment-info :comment-info="commentInfo" ref="comment"/>
+        <goods-list :goods="recommends" ref="recommend"/>
         </scroll>
     </div>
 </template>
@@ -26,6 +31,8 @@
     import Scroll from "components/common/scroll/Scroll";
 
     import {getDetail,Goods,Shop,GoodsParam,getRecommend} from "network/detail";
+    import {itemListenerMixin} from "common/mixin";
+    import {debounce} from "common/utils";
 
     export default {
         name: "Detail",
@@ -38,9 +45,13 @@
                 detailInfo: {},
                 paramInfo: {},
                 commentInfo: {},
-                recommends: []
+                recommends: [],
+                themeTopY: [],
+                getThemeTopY: null,
+                currentIndex: 0
             }
         },
+        mixins: [itemListenerMixin],
         components: {
             DetailNavBar,
             DetailSwiper,
@@ -85,6 +96,45 @@
             getRecommend().then(res => {
                 this.recommends = res.data.list
             })
+
+            // 4.给getThemeTopY赋值
+            this.getThemeTopY = debounce(() => {
+
+                this.themeTopY = []
+                this.themeTopY.push(0)
+                this.themeTopY.push((this.$refs.param.$el.offsetTop) - 44)
+                this.themeTopY.push((this.$refs.comment.$el.offsetTop) - 44)
+                this.themeTopY.push((this.$refs.recommend.$el.offsetTop) - 44)
+                // console.log(this.themeTopY);
+            })
+        },
+        destroyed(){
+            // 取消全局事件的监听,区分home，detail的refresh刷新
+            this.$bus.$off('itemImageLoad',this.itemImgListener)
+        },
+        methods: {
+            titleClick(index){
+                this.$refs.scroll.scrollTo(0,-this.themeTopY[index],100)
+            },
+            imageLoad(){
+                this.$refs.scroll.refresh()
+                // 调用点击标题滚动到对于内容
+                this.getThemeTopY()
+            },
+            contentScroll(position){
+                const positionY = -position.y
+                let length =this.themeTopY.length
+                for(let i =0; i<length; i++){
+                    if(this.currentIndex !== i &&((i < length - 1 && positionY >= this.themeTopY[i] && positionY < this.themeTopY[i+1]) ||
+                        (i === length -1 && positionY >= this.themeTopY[i]))){
+                        this.currentIndex = i
+                        this.$refs.nav.currentIndex = this.currentIndex
+                    }
+                }
+
+                // 3.是否显示回到顶部
+                // this.listenShowBackTop(position)
+            },
         }
     }
 </script>
