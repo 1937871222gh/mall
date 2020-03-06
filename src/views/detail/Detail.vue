@@ -15,6 +15,8 @@
         <detail-comment-info :comment-info="commentInfo" ref="comment"/>
         <goods-list :goods="recommends" ref="recommend"/>
         </scroll>
+        <detail-bottom-bar @addToCart="addToCart"/>
+        <back-top @click.native="backTop" v-show="isShowBackTop"/>
     </div>
 </template>
 
@@ -27,11 +29,12 @@
     import DetailParamInfo from "./childComps/DetailParamInfo";
     import DetailCommentInfo from "./childComps/DetailCommentInfo";
     import GoodsList from "../../components/content/goods/GoodsList";
+    import DetailBottomBar from "./childComps/DetailBottomBar";
 
     import Scroll from "components/common/scroll/Scroll";
 
     import {getDetail,Goods,Shop,GoodsParam,getRecommend} from "network/detail";
-    import {itemListenerMixin} from "common/mixin";
+    import {itemListenerMixin,backTopMixin} from "common/mixin";
     import {debounce} from "common/utils";
 
     export default {
@@ -51,7 +54,7 @@
                 currentIndex: 0
             }
         },
-        mixins: [itemListenerMixin],
+        mixins: [itemListenerMixin,backTopMixin],
         components: {
             DetailNavBar,
             DetailSwiper,
@@ -61,6 +64,7 @@
             DetailParamInfo,
             DetailCommentInfo,
             GoodsList,
+            DetailBottomBar,
 
             Scroll
         },
@@ -133,8 +137,25 @@
                 }
 
                 // 3.是否显示回到顶部
-                // this.listenShowBackTop(position)
+                this.listenShowBackTop(position)
             },
+            addToCart(){
+                // 1.获取购物车需要展示的信息
+                const product = {}
+                product.image = this.topImages[0]
+                product.title = this.goods.title;
+                product.desc = this.goods.desc;
+                product.price = this.goods.realPrice;
+                product.iid = this.iid;
+
+                // 2.将商品添加到购物车里面
+                // this.$store.dispatch('addCart',product).then(res =>{
+                //     console.log(res)
+                // })
+                this.addCart(product).then(res => {
+                    console.log(res)
+                })
+            }
         }
     }
 </script>
@@ -147,7 +168,7 @@
         height: 100vh;
     }
     .content{
-        height: calc(100% - 44px);
+        height: calc(100% - 44px - 57px);
     }
     .nav-bar{
         position: relative;
