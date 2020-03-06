@@ -1,12 +1,15 @@
 <template>
     <div id="detail">
-        <detail-nav-bar/>
+        <detail-nav-bar class="nav-bar"/>
+        <scroll :pullUpLoad="false" class="content">
         <detail-swiper :top-images="topImages"/>
         <detail-base-info :goods="goods"/>
         <detail-shop-info :shop="shop"/>
         <detail-goods-info :detail-info="detailInfo"/>
         <detail-param-info :param-info="paramInfo"/>
         <detail-comment-info :comment-info="commentInfo"/>
+        <goods-list :goods="recommends"/>
+        </scroll>
     </div>
 </template>
 
@@ -18,8 +21,11 @@
     import DetailGoodsInfo from "./childComps/DetailGoodsInfo";
     import DetailParamInfo from "./childComps/DetailParamInfo";
     import DetailCommentInfo from "./childComps/DetailCommentInfo";
+    import GoodsList from "../../components/content/goods/GoodsList";
 
-    import {getDetail,Goods,Shop,GoodsParam} from "network/detail";
+    import Scroll from "components/common/scroll/Scroll";
+
+    import {getDetail,Goods,Shop,GoodsParam,getRecommend} from "network/detail";
 
     export default {
         name: "Detail",
@@ -27,11 +33,12 @@
             return{
                 iid:null,
                 topImages: [],
-                goods:{},
+                goods: {},
                 shop: {},
-                detailInfo:{},
+                detailInfo: {},
                 paramInfo: {},
-                commentInfo:{},
+                commentInfo: {},
+                recommends: []
             }
         },
         components: {
@@ -41,7 +48,10 @@
             DetailShopInfo,
             DetailGoodsInfo,
             DetailParamInfo,
-            DetailCommentInfo
+            DetailCommentInfo,
+            GoodsList,
+
+            Scroll
         },
         created() {
             // 1.保存传入的iid
@@ -70,10 +80,28 @@
                     this.commentInfo = data.rate.list[0];
                 }
             })
+
+            // 3.请求推荐数据
+            getRecommend().then(res => {
+                this.recommends = res.data.list
+            })
         }
     }
 </script>
 
 <style scoped>
-
+    #detail{
+        position: relative;
+        z-index: 9;
+        background-color: #fff;
+        height: 100vh;
+    }
+    .content{
+        height: calc(100% - 44px);
+    }
+    .nav-bar{
+        position: relative;
+        z-index: 9;
+        background-color: #fff;
+    }
 </style>
